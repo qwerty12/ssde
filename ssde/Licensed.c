@@ -15,7 +15,11 @@ Environment:
 --*/
 
 #include "driver.h"
-#include "licensed.tmh"
+#ifdef _DEBUG
+#    include "licensed.tmh"
+#else
+#    define TraceEvents(...)
+#endif
 
 #ifdef ALLOC_PRAGMA
 #    pragma alloc_text(PAGE, LicensedWorker_Delete)
@@ -105,7 +109,7 @@ LicensedZwQueryValueKey2(
 
     len = sizeof(KEY_VALUE_PARTIAL_INFORMATION) + DataSize;
 
-    pinfo = ExAllocatePoolWithTag(NonPagedPool, len, LICENSED_POOL_TAG_1);
+    pinfo = ExAllocatePool2(POOL_FLAG_NON_PAGED | POOL_FLAG_UNINITIALIZED, len, LICENSED_POOL_TAG_1);
 
     status = ZwQueryValueKey(KeyHandle, ValueName, KeyValuePartialInformation, pinfo, len, &reslen);
 
@@ -170,7 +174,7 @@ EnsureProtectedIsLicensed(_In_ PLICENSEDSSDEWORKER *__this)
                 ExFreePoolWithTag(_this->CodeIntegrityLicensedValueInfo, LICENSED_POOL_TAG_1);
 #pragma warning(default : 6387)
                 _this->CodeIntegrityLicensedValueInfo =
-                    (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, ResultLength, LICENSED_POOL_TAG_1);
+                    (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePool2(POOL_FLAG_PAGED | POOL_FLAG_UNINITIALIZED, ResultLength, LICENSED_POOL_TAG_1);
                 if (_this->CodeIntegrityLicensedValueInfo)
                 {
                     _this->CodeIntegrityLicensedValueInfoSize = ResultLength;
@@ -264,15 +268,13 @@ LicensedWorker_MakeAndInitialize(PLICENSEDSSDEWORKER *__this)
         goto finalize;
     }
 
-    _this = (PLICENSEDSSDEWORKER)ExAllocatePoolWithTag(PagedPool, sizeof(LICENSEDSSDEWORKER), LICENSED_POOL_TAG_0);
+    _this = (PLICENSEDSSDEWORKER)ExAllocatePool2(POOL_FLAG_PAGED, sizeof(LICENSEDSSDEWORKER), LICENSED_POOL_TAG_0);
     if (_this == NULL)
     {
         Status = STATUS_NO_MEMORY;
         TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! ExAllocatePoolWithTag failed: %!STATUS!", Status);
         goto finalize;
     }
-
-    RtlZeroMemory(_this, sizeof(LICENSEDSSDEWORKER));
 
     *__this = _this;
 
@@ -334,7 +336,7 @@ LicensedWorker_MakeAndInitialize(PLICENSEDSSDEWORKER *__this)
         goto finalize;
     }
     _this->CodeIntegrityLicensedValueInfo =
-        (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, ResultLength, LICENSED_POOL_TAG_1);
+        (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePool2(POOL_FLAG_NON_PAGED, ResultLength, LICENSED_POOL_TAG_1);
     if (_this->CodeIntegrityLicensedValueInfo == NULL)
     {
         Status = STATUS_NO_MEMORY;

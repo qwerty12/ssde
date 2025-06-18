@@ -15,7 +15,11 @@ Environment:
 --*/
 
 #include "driver.h"
-#include "ssde.tmh"
+#ifdef _DEBUG
+#    include "ssde.tmh"
+#else
+#    define TraceEvents(...)
+#endif
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, EnableCustomKernelSigners)
@@ -244,7 +248,8 @@ EnsureCksIsLicensed(_In_ PSSDEWORKER *pWorkerContext)
 #pragma warning(disable : 6387)
             ExFreePoolWithTag(WorkerContext->ProductPolicyValueInfo, SSDE_POOL_TAG_1);
 #pragma warning(default : 6387)
-            WorkerContext->ProductPolicyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, ResultLength, SSDE_POOL_TAG_1);
+            WorkerContext->ProductPolicyValueInfo =
+                (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePool2(POOL_FLAG_PAGED | POOL_FLAG_UNINITIALIZED, ResultLength, SSDE_POOL_TAG_1);
 
             if (!WorkerContext->ProductPolicyValueInfo)
             {
@@ -352,7 +357,7 @@ Worker_MakeAndInitialize(PSSDEWORKER *pWorkerContext)
         goto finalize;
     }
 
-    WorkerContext = (PSSDEWORKER)ExAllocatePoolWithTag(PagedPool, sizeof(SSDEWORKER), SSDE_POOL_TAG_0);
+    WorkerContext = (PSSDEWORKER)ExAllocatePool2(POOL_FLAG_PAGED, sizeof(SSDEWORKER), SSDE_POOL_TAG_0);
 
     if (WorkerContext == NULL)
     {
@@ -360,8 +365,6 @@ Worker_MakeAndInitialize(PSSDEWORKER *pWorkerContext)
         TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! ExAllocatePoolWithTag failed: %!STATUS!", Status);
         goto finalize;
     }
-    
-    RtlZeroMemory(WorkerContext, sizeof(SSDEWORKER));
 
     *pWorkerContext = WorkerContext;
 
@@ -430,7 +433,7 @@ Worker_MakeAndInitialize(PSSDEWORKER *pWorkerContext)
     }
 
     WorkerContext->ProductPolicyValueInfo =
-        (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, ResultLength, SSDE_POOL_TAG_1);
+        (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePool2(POOL_FLAG_NON_PAGED, ResultLength, SSDE_POOL_TAG_1);
 
     if (WorkerContext->ProductPolicyValueInfo == NULL)
     {

@@ -22,8 +22,9 @@ Environment:
 
 #include "ssde.h"
 #include "licensed.h"
-#include "whql.h"
-#include "trace.h"
+#ifdef _DEBUG
+#    include "trace.h"
+#endif
 
 EXTERN_C_START
 

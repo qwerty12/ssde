@@ -15,7 +15,15 @@ Environment:
 --*/
 
 #include "driver.h"
-#include "driver.tmh"
+#ifdef _DEBUG
+#    include "driver.tmh"
+#else
+#    define TraceEvents(...)
+#    define WPP_INIT_TRACING(DriverObject, RegistryPath) \
+         do { UNREFERENCED_PARAMETER(DriverObject); UNREFERENCED_PARAMETER(RegistryPath); } while (0)
+#    define WPP_CLEANUP(DriverObject) \
+         do { UNREFERENCED_PARAMETER(DriverObject); } while (0)
+#endif
 
 #ifdef ALLOC_PRAGMA
 #    pragma alloc_text(INIT, DriverEntry)
@@ -85,13 +93,6 @@ Return Value:
         goto exit;
     }
 
-    status = WhqlInitializeWorker();
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WhqlInitializeWorker failed %!STATUS!", status);
-        goto exit;
-    }
-
 exit:
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit %!STATUS!", status);
 
@@ -106,7 +107,6 @@ VOID DriverUnload(PDRIVER_OBJECT DriverObject)
 
     UninitializeWorker();
     LicensedUninitializeWorker();
-    WhqlUninitializeWorker();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 }

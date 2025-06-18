@@ -64,7 +64,7 @@ typedef struct _SSDEWORKER
     ULONG ProductPolicyValueInfoSize;
 } SSDEWORKER, *PSSDEWORKER;
 
-NTSTATUS NTAPI
+extern NTSTATUS NTAPI
 ZwQueryLicenseValue(
     _In_ PUNICODE_STRING ValueName,
     _Out_opt_ PULONG Type,
@@ -72,7 +72,7 @@ ZwQueryLicenseValue(
     _In_ ULONG DataSize,
     _Out_ PULONG ResultDataSize);
 
-NTSTATUS NTAPI
+extern NTSTATUS NTAPI
 ExUpdateLicenseData(_In_ ULONG cbBytes, _In_reads_bytes_(cbBytes) PVOID lpBytes);
 
 NTSTATUS
